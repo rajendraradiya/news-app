@@ -1,0 +1,24 @@
+{
+  "include": [
+    "vite.config.*",
+    "src/**/*",
+    "src/**/*.vue",
+    "auto-imports.d.js",
+    "components.d.js"
+  ],
+  "exclude": ["dist", "node_modules"],
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "baseUrl": "./",
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
+    "paths": {
+      "@/*": ["src/*"],
+      "@images/*": ["src/assets/images/*"],
+      "@styles/*": ["src/styles/*"]
+    },
+    "types": ["vite/client"]
+  }
+}

@@ -1,32 +1,36 @@
 <script setup>
 import axios from "axios";
+import { watch } from "vue";
+import { inject } from "vue";
 import { onMounted } from "vue";
 
+const api = inject("api");
 const newsList = ref([]);
 const sectionList = ref([]);
+const currentPage = ref(1);
+const total = ref(0);
+const totalPage = ref(0);
 
-const colorList = {
-  "World news": "primary",
-  "US news": "orange",
-  Education: "pink",
-  Politics: "error",
-  "UK news": "warning",
-  Opinion: "yellow",
-  Opinion: "blue",
-  Football: "green",
-  "US news": "black",
-  "World news": "red",
-};
+import NewsCard from "@/components/NewsCard.vue";
+import Total from "@/components/Total.vue";
 
 const getNewsList = async () => {
-  axios
-    .get(
-      "http://content.guardianapis.com/search?api-key=test&show-fields=thumbnail,headline"
-    )
-    .then((res) => {
-      newsList.value = res.data.response.results;
-    });
+  const res = await api.news.getNewsList();
+  // newsList.value = res.results;
+  total.value = res.total;
+  totalPage.value = res.pages;
+
+  // axios
+  //   .get(
+  //     "http://content.guardianapis.com/search?api-key=test&show-fields=thumbnail,headline"
+  //   )
+  //   .then((res) => {
+  //   });
 };
+
+watch(currentPage, () => {
+  this.getNewsList();
+});
 
 onMounted(() => {
   getNewsList();
@@ -65,7 +69,11 @@ onMounted(() => {
         </span>
       </v-col> -->
       <v-col cols="12">
-        <div style="height: 80vh" class="overflow-y-auto">
+        <div
+          style="height: 80vh"
+          class="overflow-y-auto"
+          v-if="newsList && newsList.length > 0"
+        >
           <v-row no-gutters>
             <v-col
               cols="12"
@@ -73,70 +81,31 @@ onMounted(() => {
               :key="index"
               class="pa-5"
             >
-              <v-card color="indigo" elevation="0" variant="outlined">
-                <v-row>
-                  <v-col cols="4">
-                    <a :href="news.webUrl" target="_blank">
-                      <v-img
-                        :src="news.fields.thumbnail"
-                        contain
-                        style="height: 100%"
-                      ></v-img>
-                    </a>
-                  </v-col>
-                  <v-col cols="8" class="pt-14">
-                    <v-card-title
-                      class="text-h5 d-flex text-wrap text-left font-weight-bold pl-0"
-                    >
-                      {{ news.fields.headline }}
-                    </v-card-title>
-
-                    <div class="d-flex py-2">
-                      <v-chip
-                        variant="outlined"
-                        :color="colorList[news.sectionName]"
-                      >
-                        {{ news.sectionName }}
-                      </v-chip>
-                    </div>
-
-                    <v-card-actions class="">
-                      <v-row no-gutters>
-                        <v-col cols="6" class="d-flex justify-start align-end">
-                          <h5
-                            class="text-caption text-left"
-                            v-if="news && news.webPublicationDate"
-                          >
-                            {{
-                              new Date(news.webPublicationDate).toLocaleString()
-                            }}
-                          </h5>
-                        </v-col>
-                        <v-col cols="6" class="text-right">
-                          <a :href="news.webUrl" target="_blank">
-                            <v-btn class="ms-2" variant="outlined" size="small">
-                              Read More
-                            </v-btn>
-                          </a>
-                        </v-col>
-                      </v-row>
-                    </v-card-actions>
-                  </v-col>
-                </v-row>
-              </v-card>
+              <NewsCard :news="news" />
             </v-col>
           </v-row>
         </div>
+        <v-card
+          style="height: 80vh"
+          v-else
+          color="primary"
+          variant="outlined"
+          class="d-flex justify-center align-center"
+        >
+          <h4 class=" font-weight-light">
+            There is no news data available at the moment
+          </h4>
+        </v-card>
       </v-col>
       <v-col cols="6" class="text-left pt-7 pl-5">
-        <v-chip
-          color="primary lighten-7 pa-4 text-subtitle-1"
-          label
-          size="x-large"
-          text-color="secondary"
-        >
-          <h3>Total : <b class="notranslate"> 0 </b></h3>
-        </v-chip>
+        <Total :total="total" />
+      </v-col>
+      <v-col cols="6">
+        <v-pagination
+          v-model="currentPage"
+          class="my-4"
+          :length="totalPage"
+        ></v-pagination>
       </v-col>
     </v-row>
   </v-container>

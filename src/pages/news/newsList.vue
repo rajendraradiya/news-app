@@ -7,32 +7,34 @@ import { onMounted } from "vue";
 const api = inject("api");
 const newsList = ref([]);
 const sectionList = ref([]);
+const search = ref(null);
 const currentPage = ref(1);
 const total = ref(0);
 const totalPage = ref(0);
+import store from "@/store";
+const globalStore = store();
 
 import NewsCard from "@/components/NewsCard.vue";
 import Total from "@/components/Total.vue";
 
 const getNewsList = async () => {
-  const res = await api.news.getNewsList();
-  // newsList.value = res.results;
+  const res = await api.news.getNewsList({ q: search.value });
+  newsList.value = res.results;
   total.value = res.total;
   totalPage.value = res.pages;
-
-  // axios
-  //   .get(
-  //     "http://content.guardianapis.com/search?api-key=test&show-fields=thumbnail,headline"
-  //   )
-  //   .then((res) => {
-  //   });
 };
 
 watch(currentPage, () => {
   this.getNewsList();
 });
 
+const onSearchButton = () => {
+  globalStore.onSearch(search.value);
+  getNewsList();
+};
+
 onMounted(() => {
+  search.value = globalStore.search;
   getNewsList();
 });
 </script>
@@ -47,9 +49,10 @@ onMounted(() => {
             <v-text-field
               label="Search"
               density="compact"
+              v-model="search"
               variant="outlined"
             ></v-text-field>
-            <v-btn color="primary">
+            <v-btn color="primary" @click="onSearchButton">
               <v-icon size="large" color="white">mdi-magnify</v-icon>
             </v-btn>
           </v-col>
@@ -68,9 +71,14 @@ onMounted(() => {
           </v-chip>
         </span>
       </v-col> -->
+      <v-col cols="12" class="pl-6" v-if="globalStore && globalStore.search">
+        <h4 class="font-weight-light">
+          Result for <b>{{ globalStore.search }}</b>
+        </h4>
+      </v-col>
       <v-col cols="12">
         <div
-          style="height: 80vh"
+          style="height: 70vh"
           class="overflow-y-auto"
           v-if="newsList && newsList.length > 0"
         >
@@ -92,7 +100,7 @@ onMounted(() => {
           variant="outlined"
           class="d-flex justify-center align-center"
         >
-          <h4 class=" font-weight-light">
+          <h4 class="font-weight-light">
             There is no news data available at the moment
           </h4>
         </v-card>
@@ -102,6 +110,7 @@ onMounted(() => {
       </v-col>
       <v-col cols="6">
         <v-pagination
+          color="primary"
           v-model="currentPage"
           class="my-4"
           :length="totalPage"
